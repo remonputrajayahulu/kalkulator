@@ -164,7 +164,7 @@ def solve_limit(expr, x, point, dir_val):
             except Exception:
                 break
                 
-    return sp.limit(expr, x, point), steps
+    return sp.limit(num/den, x, point), steps
 
 try:
     x = sp.Symbol('x', real=True)
