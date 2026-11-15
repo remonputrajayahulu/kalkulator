@@ -127,44 +127,51 @@ st.markdown('</div>', unsafe_allow_html=True)
 def solve_limit(expr, x, point, dir_val):
     steps = []
     steps.append({
-        "title": "💡 Langkah 1 - Formulasi Awal", 
-        "latex": f"\\lim_{{x\\to{sp.latex(point)}}} \\left({sp.latex(expr)} \\right)"
+        "title": "📌 Langkah 1 - Formulasi Awal",
+        "latex": f"\\lim_{{x\\to{sp.latex(point)}}} \\left({sp.latex(expr)}\\right)"
     })
-    
-    # Penanganan arah pendekatan spesifik
-    if dir_val in ['+', '-']:
-        res = sp.limit(expr, x, point, dir=dir_val)
-        return res, steps
 
-    # Dua arah (+-)
+    # 1. Hitung hasil AKHIR dulu, biar gak ketuker sama soal
+    if dir_val in ['+', '-']:
+        res_final = sp.limit(expr, x, point, dir=dir_val)
+        return res_final, steps
+
+    # 2. Dua arah: cek kiri = kanan
     lim_l = sp.limit(expr, x, point, dir='-')
     lim_r = sp.limit(expr, x, point, dir='+')
     if lim_l != lim_r:
         return sp.nan, steps
 
-    # Cek Aturan L'Hôpital jika bentuk tak tentu (0/0 atau inf/inf)
-    num, den = expr.as_numer_denom()
-    if den != 1 and point.is_finite:
-        it = 1
-        while it <= 3:
-            try:
-                nv = num.subs(x, point)
-                dv = den.subs(x, point)
+    # 3. Cek L'Hopital - cuma buat NAMPILIN langkah, bukan buat ngitung hasil
+    try:
+        num, den = expr.as_numer_denom()
+        if den != 1 and point.is_finite:
+            it = 1
+            curr_num, curr_den = num, den
+            while it <= 3:
+                nv = curr_num.subs(x, point)
+                dv = curr_den.subs(x, point)
                 if (nv == 0 and dv == 0) or (sp.oo in (sp.Abs(nv), sp.Abs(dv))):
-                    num_d = sp.diff(num, x)
-                    den_d = sp.diff(den, x)
+                    num_d = sp.diff(curr_num, x)
+                    den_d = sp.diff(curr_den, x)
                     steps.append({
-                        "title": f"🌠 Langkah L'Hôpital (iterasi {it})",
-                        "latex": f"\\lim_{{x\\to{sp.latex(point)}}} \\frac{{{sp.latex(num)}}}{{{sp.latex(den)}}} = \\lim_{{x \\to {sp.latex(point)}}} \\frac{{{sp.latex(num_d)}}}{{{sp.latex(den_d)}}}"
+                        "title": f"📐 Langkah L'Hopital (iterasi {it})",
+                        "latex": f"\\lim_{{x\\to{sp.latex(point)}}} \\frac{{{sp.latex(curr_num)}}}{{{sp.latex(curr_den)}}} = \\lim_{{x\\to{sp.latex(point)}}} \\frac{{{sp.latex(num_d)}}}{{{sp.latex(den_d)}}}"
                     })
-                    num, den = num_d, den_d
+                    curr_num, curr_den = num_d, den_d
                     it += 1
                 else:
                     break
-            except Exception:
-                break
-                
-    return sp.limit(num/den, x, point), steps
+    except Exception:
+        pass
+
+    # 4. Hasil akhir WAJIB dari expr asli, bukan dari num/den yang udah keubah
+    res = sp.limit(expr, x, point)
+    steps.append({
+        "title": "✅ Langkah Terakhir - Hasil Akhir",
+        "latex": f"= {sp.latex(res)}"
+    })
+    return res, steps
 
 try:
     x = sp.Symbol('x', real=True)
